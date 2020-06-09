@@ -4,16 +4,19 @@ import Bot from "./bot.js";
 
 dotenv.config();
 
-const telegramBot = new Bot(process.env.TOKEN);
-const dbClient = new DBClient({
-  url: process.env.DB_URL,
-  dbName: process.env.DB_NAME
+
+const telegramBot = new Bot({
+  token: process.env.TOKEN,
+  dbClient: new DBClient({
+    url: process.env.DB_URL,
+    dbName: process.env.DB_NAME
+  })
 });
 
 telegramBot.init();
-dbClient.connect();
 
-telegramBot.client.onText(/\/gettwitt (.+)/, async (message, match) => {
+
+/* telegramBot.client.onText(/\/gettwitt (.+)/, async (message, match) => {
   const { id } = message.chat;
   const twittID = match[1];
 
@@ -22,5 +25,5 @@ telegramBot.client.onText(/\/gettwitt (.+)/, async (message, match) => {
     .collection("blog.econtwitts")
     .findOne({ _id: ObjectID(twittID) });
 
-    telegramBot.client.sendMessage(id, `Hello! Here is the data: ${JSON.stringify(twitt, null, 2)}`);
-});
+    telegramBot.client.sendMessage(id, `Hello! Your twitt has an ID: ${twitt.insertedID}`);
+}); */
