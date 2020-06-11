@@ -5,12 +5,13 @@ dotenv.config();
 
 const { MongoClient, ObjectID } = mongo;
 
-class DBClient {
+export default class DBClient {
   constructor({ url, dbName }) {
     this.client = new MongoClient(url, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
+    this.ID = ObjectID;
     this.dbName = dbName;
     this.db = null;
 
@@ -31,6 +32,3 @@ class DBClient {
     }
   }
 }
-
-export { DBClient as DBClient};
-export { ObjectID as ObjectID };
