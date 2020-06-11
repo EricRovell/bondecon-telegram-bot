@@ -8,8 +8,6 @@ export default class Bot {
     this.client = new TelegramBot(token, { polling: true });
     this.dbClient = dbClient;
     this.allowedChatIDs = new Set();
-
-    
   }
 
   async init() {
@@ -28,7 +26,23 @@ export default class Bot {
       }
     });
 
+    this.client.onText(/\/add_econtwitt/, async message => {
+      const chatID = message.chat.id;
+      if (!this.allowedChatIDs.has(chatID)) {
+        this.client.sendMessage(chatID, "You have no power...");
+        return;
+      }
+      // alowing action
+      const addEcontwitt = new ConversationAddEcontwitt({
+        bot: this.client,
+        dbClient: this.dbClient,
+        chatID
+      });
+    });
+
   }
+
+  
 
   //const addEcontwitt = new ConversationAddEcontwitt(telegramBot.client, dbClient);
   //addEcontwitt.init();
