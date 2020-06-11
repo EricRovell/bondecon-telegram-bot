@@ -1,8 +1,10 @@
+import renderEcontwitt from "./render.js";
+
 export default class ConversationAddEcontwitt {
-  constructor(bot, dbClient) {
+  constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
-    this.chatID = null;
+    this.chatID = chatID;
 
     this.econtwitt = {
       lang: null,
@@ -10,35 +12,17 @@ export default class ConversationAddEcontwitt {
       keywords: []
     };
 
-    this.setCallbackQuery();
+    this.doSurvey();
   }
 
-  init() {
-    this.bot.onText(/\/add_econtwitt/, async (message, match) => {
-      this.chatID = message.chat.id;
-      this.askLang();
-    });
+  async doSurvey() {
+    await this.askLang();
+    await this.askBody();
+    await this.askKeywords();
+    await this.uploadData();
   }
 
-  setCallbackQuery() {
-    this.bot.on("callback_query", (callbackQuery) => {
-      const data = JSON.parse(callbackQuery.data);
-      const options = {
-        chat_id: callbackQuery.message.chat.id,
-        message_id: callbackQuery.message.message_id
-      };
-
-      if (data.command === "language") {
-        this.econtwitt.lang = data.value;
-        this.bot.sendMessage(options.chat_id, "The language is chosen!");
-        this.bot.answerCallbackQuery(callbackQuery.id);
-
-        this.askKeywords(options);
-      }
-    });
-  }
-
-  askLang() {
+  async askLang() {
     const options = {
       reply_markup: {
         inline_keyboard: [
@@ -61,51 +45,62 @@ export default class ConversationAddEcontwitt {
         ]
       }
     };
-    this.bot.sendMessage(this.chatID, "Please, choose a language:", options);    
-  }
 
-  async askKeywords() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide some keywords, separated by comma:", {
-      reply_markup: {
-        "force_reply": true
-      }
+    await this.bot.sendMessage(this.chatID, "Please, select a language:", options);
+
+    let replyLang = await new Promise(resolve => {
+      this.bot.on("callback_query", callbackQuery => {
+        const { command, value } = JSON.parse(callbackQuery.data);
+        if (command === "language") {
+          this.bot.answerCallbackQuery(callbackQuery.id, {
+            text: "The language has been selected"
+          });
+          resolve(value);
+        }
+      });
     });
 
-    const listener = this.bot.onReplyToMessage(this.chatID, message_id, (message) => {
-      const { text } = message;
-      this.econtwitt.keywords = text.split(",").map(keyword => keyword.trim());
-      this.bot.removeReplyListener(listener);
-      this.askBody();  
-    });    
+    this.econtwitt.lang = replyLang;
   }
 
   async askBody() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide the message:", {
-      reply_markup: {
-        "force_reply": true
-      }
+    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide a message:", {
+      reply_markup: { "force_reply": true }
+    });
+    let { text } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, message_id, resolve);
     });
 
-    const listener = this.bot.onReplyToMessage(this.chatID, message_id, (message) => {
-      const { text } = message;
-      this.econtwitt.body = text;
-      this.bot.removeReplyListener(listener);
-      this.uploadData();
+    this.econtwitt.body = text;
+  }
+
+  async askKeywords() {
+    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide keywords, separated by comma:", {
+      reply_markup: { "force_reply": true }
     });
+    let { text } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, message_id, resolve);
+    });
+
+    this.econtwitt.keywords = [ ...text.split(",").map(keyword => keyword.trim()) ];  
   }
 
   async uploadData() {
     const db = await this.dbClient.connect();
 
     try {
-      const econtwitt = await db
+      await db
         .collection("blog.econtwitts")
         .insertOne(this.econtwitt);
-      this.bot.sendMessage(this.chatID, `Uploaded successfully: ${JSON.stringify(econtwitt, null, 2)}`);
+      
+      await this.bot.sendMessage(this.chatID, "Success!");
+      await this.bot.sendMessage(this.chatID, renderEcontwitt(this.econtwitt),
+        { parse_mode: "HTML" }
+      );
     } catch (error) {
+      console.log(error);
       this.bot.sendMessage(this.chatID, "Something is wrong...");
     }
-
   }
   
 }
