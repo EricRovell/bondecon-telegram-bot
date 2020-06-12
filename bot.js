@@ -48,27 +48,3 @@ export default class Bot {
   }
 
 }
-
-/* telegramBot.client.onText(/\/econtwitt (.+)/, async (message, match) => {
-  const chatID = message.chat.id;
-  const command = match[1];
-  
-  switch(command) {
-    case "add": {
-      new ConversationAddEcontwitt({
-        bot: telegramBot.client,
-        dbClient: telegramBot.dbClient,
-        chatID
-      });
-      break;
-    }
-    case "read": {
-      new ConversationGetEcontwitt({
-        bot: telegramBot.client,
-        dbClient: telegramBot.dbClient,
-        chatID
-      });
-      break;
-    }
-  }
-}); */
