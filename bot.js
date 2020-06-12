@@ -1,13 +1,15 @@
 import TelegramBot from "node-telegram-bot-api";
 import Auth from "./auth.js";
 
-import ConversationAddEcontwitt from "./econtwitt/addEcontwitt.js";
+import EcontwittCommand from "./econtwitt/EcontwittCommand.js";
 
 export default class Bot {
+  #allowedChatIDs;
+
   constructor({ token, dbClient }) {
     this.client = new TelegramBot(token, { polling: true });
     this.dbClient = dbClient;
-    this.allowedChatIDs = new Set();
+    this.#allowedChatIDs = new Set();
   }
 
   async init() {
@@ -20,45 +22,53 @@ export default class Bot {
         dbClient: this.dbClient
       });
 
-      const permission = await user.auth();
-      if (permission) {
-        this.allowedChatIDs.add(chatID);
+      await user.login();
+      if (user.permission) {
+        this.#allowedChatIDs.add(chatID);
+        // access to commands
+        this.commandEcontwitt();
       }
     });
+  }
 
-    this.client.onText(/\/add_econtwitt/, async message => {
+  commandEcontwitt() {
+    this.client.onText(/\/econtwitt/, async message => {
       const chatID = message.chat.id;
-      if (!this.allowedChatIDs.has(chatID)) {
-        this.client.sendMessage(chatID, "You have no power...");
+      /* if (!this.#allowedChatIDs.has(chatID)) {
+        await this.client.sendMessage(chatID, "Please, log in.");
         return;
-      }
-      // alowing action
-      const addEcontwitt = new ConversationAddEcontwitt({
+      }; */
+      const command = new EcontwittCommand({
         bot: this.client,
         dbClient: this.dbClient,
         chatID
       });
+      command.messageDefault;
     });
-
   }
-
-  
-
-  //const addEcontwitt = new ConversationAddEcontwitt(telegramBot.client, dbClient);
-  //addEcontwitt.init();
 
 }
 
-/* bot.onText(/\/gettwitt (.+)/, async (message, match) => {
-  const { id } = message.chat;
-  const twittID = match[1];
-
-  console.log(twittID);
-
-  const db = await client.connect();
-  const twitt = await db
-    .collection("blog.econtwitts")
-    .findOne({ _id: ObjectID(twittID) });
-
-  bot.sendMessage(id, `Hello! Here is the data: ${JSON.stringify(twitt, null, 2)}`);
+/* telegramBot.client.onText(/\/econtwitt (.+)/, async (message, match) => {
+  const chatID = message.chat.id;
+  const command = match[1];
+  
+  switch(command) {
+    case "add": {
+      new ConversationAddEcontwitt({
+        bot: telegramBot.client,
+        dbClient: telegramBot.dbClient,
+        chatID
+      });
+      break;
+    }
+    case "read": {
+      new ConversationGetEcontwitt({
+        bot: telegramBot.client,
+        dbClient: telegramBot.dbClient,
+        chatID
+      });
+      break;
+    }
+  }
 }); */
