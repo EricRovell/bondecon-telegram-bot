@@ -1,6 +1,6 @@
 import Econtwitt from "../Econtwitt.js";
 
-export default class EcontwittRead {
+export default class EcontwittFind {
   constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
