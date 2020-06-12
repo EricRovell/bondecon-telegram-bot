@@ -1,5 +1,5 @@
 import econtwittCreate from "./dialogue/econtwittCreate.js";
-import econtwittRead from "./dialogue/econtwittRead.js";
+import econtwittFind from "./dialogue/econtwittFind.js";
 
 import inlineKeyboard from "../util/InlineKeyword.js";
 
@@ -7,27 +7,24 @@ export default class EcontwittCommand {
   constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
-
+  
     this.chatID = chatID;
+    this.messageID;
     this.econtwitt;
-    this.message;
-
-    this.inlineOptions = [
-      { text: "\u{1F4DD} Create", "command": "create", value: "new" },
-      { text: "\u{1F4D6}	Read", "command": "read", value: "read" },
-      { text: "\u{270D} Update", "command": "update", value: "update" },
-      { text: "\u{1F5D1} Delete", "command": "delete", value: "delete" }
-    ];
 
     this.callbacks();
+    this.message();
   }
 
-  get messageDefault() {
-    const message = `Please, choose an option:\n\n<b>Create</b>: to make a new record;\n<b>Read</b>: to find a record;\n<b>Update</b>: to edit record;\n<b>Delete</b>: to delete a record permanently.`;
-    this.bot.sendMessage(this.chatID, message, {
-      parse_mode: "HTML",
-      ...inlineKeyboard(this.inlineOptions)
-    });
+  async message() {
+    const message = "Create a new record or find records to work with them:";
+    const inlineOptions = [
+      { text: "\u{1F4DD} Create", "command": "create", value: "new" },
+      { text: "\u{1F50D} Find", "command": "find", value: "find" },
+    ];
+
+    const { message_id } = await this.bot.sendMessage(this.chatID, message, inlineKeyboard(inlineOptions));
+    this.messageID = message_id;
   }
 
   callbacks() {
@@ -42,12 +39,25 @@ export default class EcontwittCommand {
         });
       }
 
-      if (command === "read") {
-        new econtwittRead({
+      if (command === "find") {
+        const message = "Choose the criteria for a search:"
+        const inlineOptions = [
+          { text: "ID", "command": "create", value: "new" },
+          { text: "Date", "command": "read", value: "read" },
+          { text: "Language", "command": "create", value: "new" },
+          { text: "Keywords", "command": "read", value: "read" },
+        ];
+        
+        this.bot.editMessageText(message, {
+          message_id: this.messageID,
+          chat_id: this.chatID,
+          ...inlineKeyboard(inlineOptions)
+        });
+        /* new econtwittFind({
           bot: this.bot,
           dbClient: this.dbClient,
           chatID: this.chatID
-        });
+        }); */
       }
 
     });
