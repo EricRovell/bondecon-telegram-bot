@@ -1,4 +1,5 @@
 import Econtwitt from "./Econtwitt.js";
+import inlineKeyboard from "../util/InlineKeyword.js";
 
 export default class ConversationAddEcontwitt {
   constructor({ bot, dbClient, chatID }) {
@@ -14,36 +15,19 @@ export default class ConversationAddEcontwitt {
 
   async doSurvey() {
     await this.askLang();
+    await this.askDate();
     await this.askBody();
     await this.askKeywords();
     await this.uploadData();
   }
 
   async askLang() {
-    const options = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "Русский",
-              callback_data: JSON.stringify({
-                "command": "language",
-                "value": "ru"
-              })
-            },
-            {
-              text: "English",
-              callback_data: JSON.stringify({
-                "command": "language",
-                "value": "en"
-              })
-            }
-          ]
-        ]
-      }
-    };
+    const options = [
+      { text: "Русский", command: "language", "value": "ru" },
+      { text: "English", command: "language", "value": "en" }
+    ];
 
-    await this.bot.sendMessage(this.chatID, "Please, select a language:", options);
+    await this.bot.sendMessage(this.chatID, "Please, select a language:", inlineKeyboard(options));
 
     let replyLang = await new Promise(resolve => {
       this.bot.on("callback_query", callbackQuery => {
@@ -58,6 +42,40 @@ export default class ConversationAddEcontwitt {
     });
 
     this.econtwitt.lang = replyLang;
+  }
+
+  async askDate() {
+    const options = [
+      { text: "Now", command: "date", "value": "now" },
+      { text: "Custom", command: "date", "value": "custom" }
+    ];
+    
+    await this.bot.sendMessage(this.chatID, "What timestamp should the message have?", inlineKeyboard(options));
+
+    let replyDate = await new Promise(resolve => {
+      this.bot.on("callback_query", async callbackQuery => {
+        const { value } = JSON.parse(callbackQuery.data);
+
+        if (value === "now") {
+          this.bot.answerCallbackQuery(callbackQuery.id, {
+            text: "The date has been set to present."
+          });
+          resolve(value);
+        }
+
+        if (value === "custom") {
+          const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide a date as YYYY-MM-DDThh-mm:", {
+            reply_markup: { "force_reply": true }
+          });
+          let { text } = await new Promise(resolve => {
+            this.bot.onReplyToMessage(this.chatID, message_id, resolve);
+          });
+          resolve(text);
+        }
+      });
+    });
+
+    this.econtwitt.date = replyDate;
   }
 
   async askBody() {
