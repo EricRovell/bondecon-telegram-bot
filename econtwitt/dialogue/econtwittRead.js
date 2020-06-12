@@ -1,10 +1,11 @@
-import renderEcontwitt from "./render.js";
+import Econtwitt from "../Econtwitt.js";
 
-export default class ConversationAddEcontwitt {
+export default class EcontwittRead {
   constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
     this.chatID = chatID;
+
     this.econtwittID = null;
 
     this.doSurvey();
@@ -16,14 +17,16 @@ export default class ConversationAddEcontwitt {
   }  
 
   async askID() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide an ID:", {
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, "Please, provide an ID:", {
       reply_markup: { "force_reply": true }
     });
-    let { text } = await new Promise(resolve => {
-      this.bot.onReplyToMessage(this.chatID, message_id, resolve);
+    let { text, message_id: replyID } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
     });
 
     this.econtwittID = text;
+    await this.bot.deleteMessage(this.chatID, questionID);
+    await this.bot.deleteMessage(this.chatID, replyID);
   }
 
   async queryDB() {
@@ -35,7 +38,8 @@ export default class ConversationAddEcontwitt {
         .findOne({ _id: this.dbClient.ID(this.econtwittID) });
       
       if (result) {
-        await this.bot.sendMessage(this.chatID, renderEcontwitt(result),
+        const econtwitt = new Econtwitt(result);
+        await this.bot.sendMessage(this.chatID, econtwitt.render,
           { parse_mode: "HTML" }
         );
       } else {

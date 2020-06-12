@@ -1,7 +1,8 @@
-import Econtwitt from "./Econtwitt.js";
-import inlineKeyboard from "../util/InlineKeyword.js";
+import Econtwitt from "../Econtwitt.js";
+import EcontwittMessage from "../EcontwittMessage.js";
+import inlineKeyboard from "../../util/InlineKeyword.js";
 
-export default class ConversationAddEcontwitt {
+export default class EcontwittCreate {
   constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
@@ -27,7 +28,7 @@ export default class ConversationAddEcontwitt {
       { text: "English", command: "language", "value": "en" }
     ];
 
-    await this.bot.sendMessage(this.chatID, "Please, select a language:", inlineKeyboard(options));
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, "Please, select a language:", inlineKeyboard(options));
 
     let replyLang = await new Promise(resolve => {
       this.bot.on("callback_query", callbackQuery => {
@@ -42,6 +43,7 @@ export default class ConversationAddEcontwitt {
     });
 
     this.econtwitt.lang = replyLang;
+    await this.bot.deleteMessage(this.chatID, questionID);
   }
 
   async askDate() {
@@ -50,7 +52,7 @@ export default class ConversationAddEcontwitt {
       { text: "Custom", command: "date", "value": "custom" }
     ];
     
-    await this.bot.sendMessage(this.chatID, "What timestamp should the message have?", inlineKeyboard(options));
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, "What timestamp should the message have?", inlineKeyboard(options));
 
     let replyDate = await new Promise(resolve => {
       this.bot.on("callback_query", async callbackQuery => {
@@ -64,40 +66,48 @@ export default class ConversationAddEcontwitt {
         }
 
         if (value === "custom") {
-          const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide a date as YYYY-MM-DDThh-mm:", {
+          const { message_id: questionID } = await this.bot.sendMessage(this.chatID, "Please, provide a date as YYYY-MM-DDThh-mm:", {
             reply_markup: { "force_reply": true }
           });
-          let { text } = await new Promise(resolve => {
+          let { text, message_id: replyID } = await new Promise(resolve => {
             this.bot.onReplyToMessage(this.chatID, message_id, resolve);
           });
+
+          await this.bot.deleteMessage(this.chatID, questionID);
+          await this.bot.deleteMessage(this.chatID, replyID);
           resolve(text);
         }
       });
     });
 
     this.econtwitt.date = replyDate;
+    await this.bot.deleteMessage(this.chatID, questionID);
   }
 
   async askBody() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide a message:", {
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, "Please, provide a message:", {
       reply_markup: { "force_reply": true }
     });
-    let { text } = await new Promise(resolve => {
-      this.bot.onReplyToMessage(this.chatID, message_id, resolve);
+    let { text, message_id: replyID } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
     });
 
     this.econtwitt.body = text;
+    await this.bot.deleteMessage(this.chatID, questionID);
+    await this.bot.deleteMessage(this.chatID, replyID);
   }
 
   async askKeywords() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "Please, provide keywords, separated by comma:", {
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, "Please, provide keywords, separated by comma:", {
       reply_markup: { "force_reply": true }
     });
-    let { text } = await new Promise(resolve => {
-      this.bot.onReplyToMessage(this.chatID, message_id, resolve);
+    let { text, message_id: replyID } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
     });
 
     this.econtwitt.keywords = text;
+    await this.bot.deleteMessage(this.chatID, questionID);
+    await this.bot.deleteMessage(this.chatID, replyID);
   }
 
   async uploadData() {
@@ -109,13 +119,24 @@ export default class ConversationAddEcontwitt {
         .collection("blog.econtwitts")
         .insertOne(this.econtwitt.asObject);
 
-      await this.bot.sendMessage(this.chatID, this.econtwitt.render,
+      /* await this.bot.sendMessage(this.chatID, this.econtwitt.render,
         { parse_mode: "HTML" }
-      );
+      ); */
+      this.renderMessage();
     } catch (error) {
       console.log(error);
       this.bot.sendMessage(this.chatID, "Something is wrong...");
     }
+  }
+
+  async renderMessage() {
+    const message = new EcontwittMessage({
+      bot: this.bot,
+      dbClient: this.dbClient,
+      chatID: this.chatID,
+      econtwitt: this.econtwitt
+    });
+    message.render();
   }
   
 }
