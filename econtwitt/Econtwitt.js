@@ -5,8 +5,8 @@ export default class Econtwitt {
   #body;
   #keywords;
 
-  constructor({ id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
-    this.#_id = id;
+  constructor({ _id, id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
+    this.#_id = id ?? _id;
     this.#lang = lang;
     this.#date = date;
     this.#body = body;
@@ -56,6 +56,10 @@ export default class Econtwitt {
       return;
     };
     throw new TypeError("Keywords should be a string or an array.");
+  }
+
+  get id() {
+    return this.#_id;
   }
 
   get asObject() {
