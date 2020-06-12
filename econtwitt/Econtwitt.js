@@ -1,12 +1,14 @@
 export default class Econtwitt {
   #_id;
   #lang;
+  #date;
   #body;
   #keywords;
 
-  constructor({ id, lang, body, keywords } = {}) {
+  constructor({ id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
     this.#_id = id;
     this.#lang = lang;
+    this.#date = date;
     this.#body = body;
     this.#keywords = keywords;
   }
@@ -16,17 +18,25 @@ export default class Econtwitt {
   }
 
   set lang(lang) {
-    const ru = new Set([ "ru", "RU", "Russian", "русский", "Русский"]);
-    const en = new Set([ "en", "EN", "Enslish", "english", "Английский", "eng", "ENG" ]);
-    if (en.has(lang)) {
+    const ru = new Set([ "ru", "russian", "русский" ]);
+    const en = new Set([ "en", "english", "английский", "eng" ]);
+    if (en.has(lang.toLowerCase())) {
       this.#lang = lang;
       return;
     }
-    if (ru.has(lang)) {
+    if (ru.has(lang.toLowerCase())) {
       this.#lang = lang;
       return;
     };
     throw new ValueError("Language should russian or english.");
+  }
+
+  set date(date) {
+    // Date now is default
+    if (date.toLowerCase() === "now") return;
+    if (new Date(date) !== "Invalid Date") {
+      this.#date = new Date(date);
+    }
   }
 
   set body(body) {
@@ -50,15 +60,16 @@ export default class Econtwitt {
 
   get asObject() {
     return {
-      id: this.#_id,
+      _id: this.#_id,
       lang: this.#lang,
+      date: this.#date.toISOString(),
       body: this.#body,
       keywords: this.#keywords
     };
   }
 
   get render() {
-    const renderID = `<b>ID: ${this.#_id}</b>`;
+    const renderID = `<pre>${this.#date.toLocaleString("ru")}</pre>\n<b>ID: ${this.#_id}</b>`;
     const renderBody = `<pre>${this.#body}</pre>`;
     const renderKeywords = `<i>${
       this.#keywords
