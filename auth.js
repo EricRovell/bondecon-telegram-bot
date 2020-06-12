@@ -9,6 +9,15 @@ export default class Auth {
     this.permission = false;
   }
 
+  async login() {
+    await this.auth();
+    if (!this.permission) {
+      await this.askName();
+      await this.askSecret();
+      await this.validateUser();
+    }
+  }
+
   async auth() {
     // check the user by chatID first
     const db = await this.dbClient.connect();
@@ -17,59 +26,55 @@ export default class Auth {
       .findOne({ chatID: this.chatID });
 
     if (user) {
-      this.bot.sendMessage(this.chatID, "Glad to see you!");
+      this.bot.sendMessage(this.chatID, `Always glad to see you, ${user.name}! How can I help?`);
       this.permission = true;
-      return this.permission;
     }
-
-    await this.askLogin(); 
   }
 
-  async askLogin() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "Hi there! What is your name, my friend?", {
-      reply_markup: {
-        "force_reply": true
-      }
+  async askName() {
+    const question = "Hi there! What is your name, my friend?";
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, question, {
+      reply_markup: { "force_reply": true }
+    });
+    let { text: reply, message_id: replyID } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
     });
 
-    const listener = this.bot.onReplyToMessage(this.chatID, message_id, (message) => {
-      this.user = message.text;
-      this.bot.removeReplyListener(listener);
-      this.askPass();
-    });
+    this.user = reply;
+    this.bot.deleteMessage(this.chatID, questionID);
+    this.bot.deleteMessage(this.chatID, replyID);
   }
 
-  async askPass() {
-    const { message_id } = await this.bot.sendMessage(this.chatID, "What is the secret?", {
-      reply_markup: {
-        "force_reply": true
-      }
+  async askSecret() {
+    const question = "What is the secret?";
+    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, question, {
+      reply_markup: { "force_reply": true }
+    });
+    let { text: reply, message_id: replyID } = await new Promise(resolve => {
+      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
     });
 
-    const listener = this.bot.onReplyToMessage(this.chatID, message_id, async (message) => {
-      this.password = message.text;
-      this.bot.removeReplyListener(listener);
-      this.authUser();
-    });
+    this.password = reply;
+    this.bot.deleteMessage(this.chatID, questionID);
+    this.bot.deleteMessage(this.chatID, replyID);
   }
 
-  async authUser() {
+  async validateUser() {
     const db = await this.dbClient.connect();
     const user = await db
       .collection("users")
       .findOneAndUpdate({
-        user: this.user,
+        name: this.user,
         password: this.password
       }, {
         $set: { chatID: this.chatID }
       });
 
-    if (user) {
+    if (user.value) {
       this.permission = true;
-      this.bot.sendMessage(this.chatID, "It is nice to see you!");
+      this.bot.sendMessage(this.chatID, `It is nice to see you, ${user.value.name}!`);
     } else {
       this.bot.sendMessage(this.chatID, "Sorry, I do not recognize you...");
     }
   }
-
 }
