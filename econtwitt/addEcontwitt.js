@@ -1,17 +1,14 @@
-import renderEcontwitt from "./render.js";
+import Econtwitt from "./Econtwitt.js";
 
 export default class ConversationAddEcontwitt {
   constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
     this.chatID = chatID;
-
-    this.econtwitt = {
-      lang: null,
-      body: null,
-      keywords: []
-    };
-
+    this.econtwitt = new Econtwitt({
+      id: new dbClient.ID()
+    });
+    // init the dialogue after creation
     this.doSurvey();
   }
 
@@ -82,19 +79,19 @@ export default class ConversationAddEcontwitt {
       this.bot.onReplyToMessage(this.chatID, message_id, resolve);
     });
 
-    this.econtwitt.keywords = [ ...text.split(",").map(keyword => keyword.trim()) ];  
+    this.econtwitt.keywords = text;
   }
 
   async uploadData() {
     const db = await this.dbClient.connect();
+    console.log(this.econtwitt.asObject);
 
     try {
       await db
         .collection("blog.econtwitts")
-        .insertOne(this.econtwitt);
-      
-      await this.bot.sendMessage(this.chatID, "Success!");
-      await this.bot.sendMessage(this.chatID, renderEcontwitt(this.econtwitt),
+        .insertOne(this.econtwitt.asObject);
+
+      await this.bot.sendMessage(this.chatID, this.econtwitt.render,
         { parse_mode: "HTML" }
       );
     } catch (error) {
