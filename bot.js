@@ -13,6 +13,8 @@ export default class Bot {
   }
 
   async init() {
+    this.client.on("polling_error", error => console.log(error));
+
     this.client.onText(/\/start/, async message => {
       const chatID = message.chat.id;
 
@@ -38,12 +40,11 @@ export default class Bot {
         await this.client.sendMessage(chatID, "Please, log in.");
         return;
       }; */
-      const command = new EcontwittCommand({
+      new EcontwittCommand({
         bot: this.client,
         dbClient: this.dbClient,
         chatID
       });
-      command.messageDefault;
     });
   }
 
