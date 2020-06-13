@@ -1,3 +1,5 @@
+import question from "./util/question.js";
+
 export default class Auth {
   constructor({ bot, dbClient, chatID }) {
     this.bot = bot;
@@ -26,37 +28,25 @@ export default class Auth {
       .findOne({ chatID: this.chatID });
 
     if (user) {
-      this.bot.sendMessage(this.chatID, `Always glad to see you, ${user.name}! How can I help?`);
+      this.bot.sendMessage(this.chatID, `Always glad to see you, ${user.name}! How can I help?\n\n/econtwitt`);
       this.permission = true;
     }
   }
 
   async askName() {
-    const question = "Hi there! What is your name, my friend?";
-    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, question, {
-      reply_markup: { "force_reply": true }
+    this.user = await question({
+      bot: this.bot,
+      chatID: this.chatID,
+      message: "Hi there! What is your name, my friend?"
     });
-    let { text: reply, message_id: replyID } = await new Promise(resolve => {
-      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
-    });
-
-    this.user = reply;
-    this.bot.deleteMessage(this.chatID, questionID);
-    this.bot.deleteMessage(this.chatID, replyID);
   }
 
   async askSecret() {
-    const question = "What is the secret?";
-    const { message_id: questionID } = await this.bot.sendMessage(this.chatID, question, {
-      reply_markup: { "force_reply": true }
+    this.password = await question({
+      bot: this.bot,
+      chatID: this.chatID,
+      message: "What is the secret?"
     });
-    let { text: reply, message_id: replyID } = await new Promise(resolve => {
-      this.bot.onReplyToMessage(this.chatID, questionID, resolve);
-    });
-
-    this.password = reply;
-    this.bot.deleteMessage(this.chatID, questionID);
-    this.bot.deleteMessage(this.chatID, replyID);
   }
 
   async validateUser() {
@@ -72,7 +62,7 @@ export default class Auth {
 
     if (user.value) {
       this.permission = true;
-      this.bot.sendMessage(this.chatID, `It is nice to see you, ${user.value.name}!`);
+      this.bot.sendMessage(this.chatID, `It is nice to see you, ${user.value.name}!\n\n/econtwitt`);
     } else {
       this.bot.sendMessage(this.chatID, "Sorry, I do not recognize you...");
     }
