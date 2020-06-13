@@ -17,18 +17,15 @@ export default class Bot {
 
     this.client.onText(/\/start/, async message => {
       const chatID = message.chat.id;
-
       const user = new Auth({
         chatID,
         bot: this.client,
         dbClient: this.dbClient
       });
-
+  
       await user.login();
       if (user.permission) {
         this.#allowedChatIDs.add(chatID);
-        // access to commands
-        this.commandEcontwitt();
       }
     });
   }
@@ -36,10 +33,12 @@ export default class Bot {
   commandEcontwitt() {
     this.client.onText(/\/econtwitt/, async message => {
       const chatID = message.chat.id;
-      /* if (!this.#allowedChatIDs.has(chatID)) {
-        await this.client.sendMessage(chatID, "Please, log in.");
+      // validate chatID
+      if (!this.#allowedChatIDs.has(chatID)) {
+        this.client.sendMessage(chatID, "Please, login: type /start");
         return;
-      }; */
+      };
+
       new EcontwittCommand({
         bot: this.client,
         dbClient: this.dbClient,
