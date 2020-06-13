@@ -13,3 +13,6 @@ const telegramBot = new Bot({
 });
 
 telegramBot.init();
+
+// commands init
+telegramBot.commandEcontwitt();
