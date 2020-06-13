@@ -5,8 +5,8 @@ export default class Econtwitt {
   #body;
   #keywords;
 
-  constructor({ _id, id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
-    this.#_id = id ?? _id;
+  constructor({ id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
+    this.#_id = id;
     this.#lang = lang;
     this.#date = date;
     this.#body = body;
