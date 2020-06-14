@@ -5,8 +5,8 @@ export default class Econtwitt {
   #body;
   #keywords;
 
-  constructor({ id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
-    this.#_id = id;
+  constructor({ id, _id, lang = "ru", date = new Date(), body, keywords = [] } = {}) {
+    this.#_id = id ?? _id;
     this.#lang = lang;
     this.#date = date;
     this.#body = body;
@@ -48,7 +48,7 @@ export default class Econtwitt {
 
   set keywords(keywords) {
     if (typeof keywords === "string") {
-      this.#keywords = [ ...keywords.split(",").map(keyword => keyword.trim()) ];
+      this.#keywords = [ ...keywords.split(",").map(keyword => keyword.trim().toLowerCase()) ];
       return;
     }
     if (Array.isArray(keywords)) {
@@ -73,18 +73,20 @@ export default class Econtwitt {
   }
 
   get render() {
-    const renderID = `<pre>${this.#date.toLocaleString("ru")}</pre>\n<b>ID: ${this.#_id}</b>`;
-    const renderBody = `<pre>${this.#body}</pre>`;
-    const renderKeywords = `<i>${
+    const date = `<pre>\u{1F4C5}\t${this.#date.toLocaleString("ru")}</pre>\n`;
+    const id = `\u{2728}\t<b>ID: ${this.#_id}</b>\n\n`;
+    const body = `<pre>${this.#body}</pre>\n\n`;
+    const keywords = `\u{1F5DD}\t<i>${
       this.#keywords
         .map(keyword => `#${keyword.replace(/\s/g, "_")}`)
         .join(" ")
     }</i>`;
 
     return [
-      renderID,
-      renderBody,
-      renderKeywords
-    ].join("\n\n");
+      date,
+      id,
+      body,
+      keywords
+    ].join("");
   }
 }
