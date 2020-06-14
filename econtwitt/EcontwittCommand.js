@@ -1,6 +1,5 @@
 import econtwittCreate from "./dialogue/econtwittCreate.js";
 import econtwittFind from "./dialogue/econtwittFind.js";
-
 import inlineKeyboard from "../util/inlineKeyword.js";
 
 export default class EcontwittCommand {
@@ -19,7 +18,8 @@ export default class EcontwittCommand {
     const inlineOptions = [
       [
         [ "\u{1F4DD} Create", "create" ],
-        [ "\u{1F50D} Find", "find" ]
+        [ "\u{1F50D} Find", "find" ],
+        [ "\u{1F50D} Cancel", "cancel" ]
       ]
     ];
 
@@ -38,6 +38,8 @@ export default class EcontwittCommand {
         this.create(); break;
       case "find":
         this.findOption(); break;
+      case "cancel":
+        this.finishDialogue(); break;
     }
   }
 
@@ -51,22 +53,16 @@ export default class EcontwittCommand {
   }
 
   findOption() {
-    const message = "Choose the criteria for a search:"
-    const inlineOptions = [
-      [[ "ID", "id" ]],
-      [
-        [ "Date", "date" ],
-        [ "Language", "lang" ],
-        [ "Keywords", "keywords" ]
-      ],
-      [[ "Back", "back" ], [ "Search", "search" ]]
-    ];
-  
-    this.bot.editMessageText(message, {
-      message_id: this.messageID,
-      chat_id: this.chatID,
-      ...inlineKeyboard(inlineOptions)
+    new econtwittFind({
+      bot: this.bot,
+      dbClient: this.dbClient,
+      chatID: this.chatID,
+      messageID: this.messageID
     });
+  }
+
+  async finishDialogue() {
+    await this.bot.deleteMessage(this.chatID, this.messageID);
   }
 
 }
