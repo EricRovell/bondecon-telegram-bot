@@ -23,7 +23,12 @@ export default class EcontwittMessage {
     let reply = await new Promise(resolve => {
       this.bot.on("callback_query", callbackQuery => {
         const { command } = JSON.parse(callbackQuery.data);
-        resolve(command);  
+        if (command === "delete") {
+          this.bot.answerCallbackQuery(callbackQuery.id, {
+            text: "The message was deleted."
+          });
+        }
+        resolve(command);
       });
     });
 
@@ -42,10 +47,7 @@ export default class EcontwittMessage {
       await db
         .collection("blog.econtwitts")
         .deleteOne({ _id: this.econtwitt.id });
-      await this.bot.editMessageText("Deleted...", {
-        message_id: this.messageID,
-        chat_id: this.chatID,
-      });
+      await this.bot.deleteMessage(this.chatID, this.messageID);
     } catch (error) {
       console.log(error);
       this.bot.sendMessage(this.chatID, "Something is wrong...");
