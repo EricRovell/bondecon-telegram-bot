@@ -101,7 +101,7 @@ export default class EcontwittFind {
     const reply = await question({
       bot: this.bot,
       chatID: this.chatID,
-      message: "Please, provide an ID:"
+      message: "Please, provide keywords, separated by comma:"
     });
 
     // to select documents where all such keywords are present
