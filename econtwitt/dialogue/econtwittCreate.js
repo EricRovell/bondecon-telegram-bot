@@ -2,7 +2,8 @@ import Econtwitt from "../Econtwitt.js";
 import EcontwittMessage from "../EcontwittMessage.js";
 import inlineKeyboard from "../../util/inlineKeyword.js";
 import question from "../../util/question.js";
-import questionEdited from "../../util/questionEdited.js";
+import questionInline from "../../util/questionInline.js";
+
 
 export default class EcontwittCreate {
   constructor({ bot, dbClient, chatID, messageID }) {
@@ -26,56 +27,35 @@ export default class EcontwittCreate {
   }
 
   async askLang() {
-    this.bot.editMessageText("Please, select a language:", {
-      message_id: this.messageID,
-      chat_id: this.chatID,
-      ...inlineKeyboard([
+    this.econtwitt.lang = await questionInline({
+      bot: this.bot,
+      chatID: this.chatID,
+      message: "Please, select a language:",
+      messageID: this.messageID,
+      options: [
         [[ "Русский", "ru" ], [ "English", "en" ]],
-      ])
-    });
-
-    this.econtwitt.lang = await new Promise(resolve => {
-      this.bot.on("callback_query", callbackQuery => {
-        const { command } = JSON.parse(callbackQuery.data);
-        this.bot.answerCallbackQuery(callbackQuery.id, {
-          text: "The language has been selected"
-        });
-        resolve(command);  
-      });
+      ]
     });
   }
 
   async askDate() {
-    this.bot.editMessageText("What timestamp should the message have?", {
-      message_id: this.messageID,
-      chat_id: this.chatID,
-      ...inlineKeyboard([
+    const reply = await questionInline({
+      bot: this.bot,
+      chatID: this.chatID,
+      message: "What timestamp should the message have?",
+      messageID: this.messageID,
+      options: [
         [[ "Now", "now" ], [ "Custom", "custom" ]],
-      ])
+      ]
     });
 
-    this.econtwitt.date = await new Promise(resolve => {
-      this.bot.on("callback_query", async callbackQuery => {
-        const { command } = JSON.parse(callbackQuery.data);
-        let reply = "now";
-
-        if (command === "now") {
-          this.bot.answerCallbackQuery(callbackQuery.id, {
-            text: "The date has been set to present."
-          });
-        }
-
-        if (command === "custom") {
-          reply = await question({
-            bot: this.bot,
-            chatID: this.chatID,
-            message: "Please, provide a date as YYYY-MM-DD:THH-MM-ss:"
-          });
-        }
-
-        resolve(reply);
+    if (reply === "custom") {
+      this.econtwitt.date = await question({
+        bot: this.bot,
+        chatID: this.chatID,
+        message: "Please, provide a date as YYYY-MM-DD:THH-MM-ss:"
       });
-    });
+    }
 
     // later the user input should be text
     // it is not possible to edit messages without inline buttons
