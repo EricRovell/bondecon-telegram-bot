@@ -10,7 +10,7 @@ export default async function question({ bot, chatID, messageID, message, option
         /* bot.answerCallbackQuery(callbackQuery.id, {
           text: "The language has been selected"
         }); */
-        resolve(command);  
+        resolve(command);
       });
     });
   }
