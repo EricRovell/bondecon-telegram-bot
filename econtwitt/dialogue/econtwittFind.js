@@ -1,15 +1,12 @@
+// Conversation super class
+import Conversation from "../../src/Conversation.js";
+//
 import Econtwitt from "../Econtwitt.js";
 import Viewer from "../../src/Viewer.js";
-import inlineKeyboard from "../../util/inlineKeyword.js";
-import question from "../../util/question.js";
-import questionInline from "../../util/questionInline.js";
 
-export default class EcontwittFind {
+export default class EcontwittFind extends Conversation {
   constructor({ bot, dbClient, chatID, messageID }) {
-    this.bot = bot;
-    this.dbClient = dbClient;
-    this.chatID = chatID;
-    this.messageID = messageID;
+    super({ bot, dbClient, chatID, messageID });
     this.callbackID = null;
     this.query = {};
 
@@ -35,7 +32,7 @@ export default class EcontwittFind {
     this.bot.editMessageText(message, {
       message_id: this.messageID,
       chat_id: this.chatID,
-      ...inlineKeyboard(inlineOptions)
+      ...Conversation.inlineKeyboard(inlineOptions)
     });
 
     this.bot.on("callback_query", async callbackQuery => {
@@ -57,8 +54,10 @@ export default class EcontwittFind {
           this.query = {}; break;
         case "search":
           this.queryDB(); break;
+        default:
+          break;
       }
-    });
+    }, { once: true });
   }
 
   async finishDialogue() {
@@ -67,9 +66,7 @@ export default class EcontwittFind {
   }
 
   async askID() {
-    const id = await question({
-      bot: this.bot,
-      chatID: this.chatID,
+    const id = await this.question({
       message: "Please, provide an ID:"
     });
 
@@ -80,10 +77,8 @@ export default class EcontwittFind {
   }
 
   async askLang() {
-    const reply = await questionInline({
-      bot: this.bot,
-      chatID: this.chatID,
-      message: "Please, provide an ID:",
+    const reply = await this.questionInline({
+      message: "Please, provide a language:",
       options: [
         [[ "Русский", "ru" ], [ "English", "en" ]]
       ]
@@ -93,12 +88,14 @@ export default class EcontwittFind {
       text: `Language set to ${reply}.`
     });
     this.query.lang = reply;
+
+    // because this is overiding inline query, we rerender initial message
+    this.init();
   }
 
   async askKeywords() {
-    const reply = await question({
-      bot: this.bot,
-      chatID: this.chatID,
+    console.log(this.bot._events);
+    const reply = await this.question({
       message: "Please, provide keywords, separated by comma:"
     });
 
@@ -109,9 +106,7 @@ export default class EcontwittFind {
   }
 
   async askDate() {
-    const reply = await question({
-      bot: this.bot,
-      chatID: this.chatID,
+    const reply = await this.question({
       message: "Please, provide a day date as YYYY-MM-DD:"
     });
 
