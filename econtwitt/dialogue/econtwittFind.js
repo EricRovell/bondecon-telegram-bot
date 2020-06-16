@@ -1,4 +1,5 @@
 import Econtwitt from "../Econtwitt.js";
+import Viewer from "../../src/Viewer.js";
 import inlineKeyboard from "../../util/inlineKeyword.js";
 import question from "../../util/question.js";
 import questionInline from "../../util/questionInline.js";
@@ -37,34 +38,31 @@ export default class EcontwittFind {
       ...inlineKeyboard(inlineOptions)
     });
 
-    /* await new Promise(resolve => { */
-      this.bot.on("callback_query", async callbackQuery => {
-        const { command } = JSON.parse(callbackQuery.data);
-        this.callbackID = callbackQuery.id;
+    this.bot.on("callback_query", async callbackQuery => {
+      const { command } = JSON.parse(callbackQuery.data);
+      this.callbackID = callbackQuery.id;
 
-        switch(command) {
-          case "id":
-            this.askID(); break;
-          case "date":
-            this.askDate(); break;
-          case "lang":
-            this.askLang(); break;
-          case "keywords":
-            this.askKeywords(); break;
-          case "cancel":
-            this.finishDialogue(); break;
-          case "reset":
-            this.query = {}; break;
-          case "search":
-            this.queryDB(); break;
-        }
-
-        /* resolve(reply); */
-      });
-    /* }); */
+      switch(command) {
+        case "id":
+          this.askID(); break;
+        case "date":
+          this.askDate(); break;
+        case "lang":
+          this.askLang(); break;
+        case "keywords":
+          this.askKeywords(); break;
+        case "cancel":
+          this.finishDialogue(); break;
+        case "reset":
+          this.query = {}; break;
+        case "search":
+          this.queryDB(); break;
+      }
+    });
   }
 
   async finishDialogue() {
+    this.bot.removeListener("callback_query");
     await this.bot.deleteMessage(this.chatID, this.messageID);
   }
 
@@ -127,16 +125,22 @@ export default class EcontwittFind {
     const db = await this.dbClient.connect();
 
     try {
-      console.log(this.query);
       const result = await db
         .collection("blog.econtwitts")
-        .findOne({ ...this.query });
+        .find({ ...this.query });
       
       if (result) {
-        const econtwitt = new Econtwitt(result);
-        await this.bot.sendMessage(this.chatID, econtwitt.render,
-          { parse_mode: "HTML" }
-        );
+        const view = new Viewer({
+          bot: this.bot,
+          dbClient: this.dbClient,
+          chatID: this.chatID,
+          messageID: this.messageID,
+          cursor: result,
+          documents: await result.count(),
+          Construct: Econtwitt
+        });
+
+        view.render();
       } else {
         await this.bot.answerCallbackQuery(this.callbackID, {
           text: "Nothing has been found..."
