@@ -1,16 +1,12 @@
+// conversation super class
+import Conversation from "../../src/Conversation.js";
+// record constructors
 import Econtwitt from "../Econtwitt.js";
 import EcontwittMessage from "../EcontwittMessage.js";
-import inlineKeyboard from "../../util/inlineKeyword.js";
-import question from "../../util/question.js";
-import questionInline from "../../util/questionInline.js";
 
-
-export default class EcontwittCreate {
+export default class EcontwittCreate extends Conversation {
   constructor({ bot, dbClient, chatID, messageID }) {
-    this.bot = bot;
-    this.dbClient = dbClient;
-    this.chatID = chatID;
-    this.messageID = messageID;
+    super({ bot, dbClient, chatID, messageID });
     this.econtwitt = new Econtwitt({
       id: new dbClient.ID()
     });
@@ -27,11 +23,8 @@ export default class EcontwittCreate {
   }
 
   async askLang() {
-    this.econtwitt.lang = await questionInline({
-      bot: this.bot,
-      chatID: this.chatID,
+    this.econtwitt.lang = await this.questionInline({
       message: "Please, select a language:",
-      messageID: this.messageID,
       options: [
         [[ "Русский", "ru" ], [ "English", "en" ]],
       ]
@@ -39,20 +32,15 @@ export default class EcontwittCreate {
   }
 
   async askDate() {
-    const reply = await questionInline({
-      bot: this.bot,
-      chatID: this.chatID,
+    const reply = await this.questionInline({
       message: "What timestamp should the message have?",
-      messageID: this.messageID,
       options: [
         [[ "Now", "now" ], [ "Custom", "custom" ]],
       ]
     });
 
     if (reply === "custom") {
-      this.econtwitt.date = await question({
-        bot: this.bot,
-        chatID: this.chatID,
+      this.econtwitt.date = await this.question({
         message: "Please, provide a date as YYYY-MM-DD:THH-MM-ss:"
       });
     }
@@ -66,17 +54,13 @@ export default class EcontwittCreate {
   }
 
   async askBody() {
-    this.econtwitt.body = await question({
-      bot: this.bot,
-      chatID: this.chatID,
+    this.econtwitt.body = await this.question({
       message: "Please, provide a message:"
     });
   }
 
   async askKeywords() {
-    this.econtwitt.keywords = await question({
-      bot: this.bot,
-      chatID: this.chatID,
+    this.econtwitt.keywords = await this.question({
       message: "Please, provide keywords, separated by comma:"
     });
   }
