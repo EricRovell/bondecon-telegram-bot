@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import DBClient from "./db.js";
-import Bot from "./bot.js";
+import DBClient from "./src/services/db.js";
+import Bot from "./src/bot.js";
 
 dotenv.config();
 
