@@ -14,7 +14,19 @@ export default class EcontwittCommand {
   }
 
   async message() {
-    const message = "Create a new record or find records to work with them:";
+    const message = [
+      "<b>Econtwitts</b> are short and concise public messages.\n\n",
+      "Econtwitt's schema consists of:\n\n",
+      "- <i>Message</i>: plain text,\n",
+      "- <i>Date</i> of creation (can be set custom),\n",
+      "- <i>Language</i> of the message (RU and EN available),\n",
+      "- <i>Keywords</i> assosiated with the message.\n\n",
+      "At your disposal the power of:\n\n",
+      "- <b>Creating</b> new messages\n",
+      "- Making a <b>search</b> against your records to <b>edit</b> or <b>delete</b> them.\n\n",
+      "If you do not need the power right now, cancel the invocation, please. Thank you."
+    ].join("");
+
     const inlineOptions = [
       [
         [ "\u{1F4DD} Create", "create" ],
@@ -23,7 +35,11 @@ export default class EcontwittCommand {
       ]
     ];
 
-    const { message_id } = await this.bot.sendMessage(this.chatID, message, inlineKeyboard(inlineOptions));
+    const { message_id } = await this.bot.sendMessage(this.chatID, message, {
+      parse_mode: "HTML",
+      ...inlineKeyboard(inlineOptions)
+    });
+    
     this.messageID = message_id;
 
     let reply = await new Promise(resolve => {
