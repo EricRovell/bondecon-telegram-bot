@@ -1,31 +1,34 @@
 import question from "../../util/question.js";
 
 export default class Auth {
-  constructor({ bot, dbClient, chatID }) {
+  #secret;
+
+  constructor({ bot, dbClient, userID, chatID }) {
     this.bot = bot;
     this.dbClient = dbClient;
 
+    this.userID = userID;
     this.chatID = chatID;
-    this.user = null;
-    this.password = null;
+    this.#secret = null;
     this.permission = false;
   }
 
   async login() {
+    // check by userID
     await this.auth();
+    // userID check failed -> ask the secret
     if (!this.permission) {
-      await this.askName();
       await this.askSecret();
       await this.validateUser();
     }
   }
 
   async auth() {
-    // check the user by chatID first
+    // check by userID
     const db = await this.dbClient.connect();
     const user = await db
       .collection("users")
-      .findOne({ chatID: this.chatID });
+      .findOne({ userID: this.userID }, { name: 1 });
 
     if (user) {
       this.bot.sendMessage(this.chatID, `Always glad to see you, ${user.name}! How can I help?\n\n/econtwitt`);
@@ -33,16 +36,8 @@ export default class Auth {
     }
   }
 
-  async askName() {
-    this.user = await question({
-      bot: this.bot,
-      chatID: this.chatID,
-      message: "Hi there! What is your name, my friend?"
-    });
-  }
-
   async askSecret() {
-    this.password = await question({
+    this.#secret = await question({
       bot: this.bot,
       chatID: this.chatID,
       message: "What is the secret?"
@@ -54,10 +49,9 @@ export default class Auth {
     const user = await db
       .collection("users")
       .findOneAndUpdate({
-        name: this.user,
-        password: this.password
+        secret: this.#secret
       }, {
-        $set: { chatID: this.chatID }
+        $set: { userID: this.userID }
       });
 
     if (user.value) {
@@ -66,5 +60,15 @@ export default class Auth {
     } else {
       this.bot.sendMessage(this.chatID, "Sorry, I do not recognize you...");
     }
+  }
+
+  static async getAllowedIDs(dbClient) {
+    const db = await dbClient.connect();
+    return await db
+      .collection("users")
+      .find(
+        { userID: { $exists: true }},
+        { projection: { userID: 1, _id: 0 }}
+      ).toArray();
   }
 }
