@@ -14,8 +14,6 @@ export default class DBClient {
     this.ID = ObjectID;
     this.dbName = dbName;
     this.db = null;
-
-    this.connect();
   }
 
   async connect() {
