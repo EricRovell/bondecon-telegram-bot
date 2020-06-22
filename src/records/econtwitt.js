@@ -5,7 +5,13 @@ export default class Econtwitt {
   #body;
   #keywords;
 
-  constructor({ id, _id, lang = "ru", date = new Date(), body = "Empty message. Probably, secret one.", keywords = [] } = {}) {
+  constructor({
+    id, _id,
+    lang = "ru",
+    date = new Date(),
+    body = "Empty message. Probably, secret one.",
+    keywords = [],
+  } = {}) {
     this.#_id = id ?? _id;
     this.#lang = lang;
     this.#date = date;
@@ -43,7 +49,7 @@ export default class Econtwitt {
     if (typeof body !== "string") {
       throw TypeError("Body of the massage should be a string.")
     }
-    this.#body = body;
+    this.#body = body.trim();
   }
 
   set keywords(keywords) {
@@ -91,4 +97,50 @@ export default class Econtwitt {
       keywords
     ].join("");
   }
+
+  static fromObject({ id, _id, lang, date = new Date, body, keywords = [] }) {
+    const econtwitt = new Econtwitt();
+    // using setters to edit data
+    econtwitt.id = id ?? _id ?? null;
+    econtwitt.lang = lang;
+    econtwitt.date = date;
+    econtwitt.body = body;
+    econtwitt.keywords = keywords;
+
+    return econtwitt;
+  }
+
+  static fromTextFile(textFileData) {
+    try {
+      const [ body, metadata ] = parseData(textFileData);
+      
+      return Econtwitt.fromObject({
+        ...metadata,
+        body
+      });
+
+    } catch (error) {
+      console.log(error);
+    }
+
+    function parseData(data) {
+      // will be storing raw metadata here
+      const metadata = {};
+      // cut data to get frontmatter and body
+      const [ rawFrontmatter, body ] = data.split(/\-{3,}/, 2);
+      const frontmatter = rawFrontmatter
+        .split(/\r\n/)
+        .filter(Boolean)
+        .map(line => {
+          // ! meta key:value, value should have whitespace after colon
+          // ! possible split on date value as 2020-01-01T12:12 as it has colon too
+          const [ param, value ] = line.split(/(?<=\D)\:(?=\D)/);
+          metadata[param] = value.trim();
+        });
+
+      return [ body.trim(), metadata ];
+    }
+  }
+
+
 }
