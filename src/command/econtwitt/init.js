@@ -1,5 +1,6 @@
 import econtwittCreate from "./create.js";
 import econtwittFind from "./find.js";
+import econtwittUpload from "./upload.js";
 import inlineKeyboard from "../../../util/InlineKeyword.js";
 
 export default class EcontwittCommand {
@@ -30,6 +31,7 @@ export default class EcontwittCommand {
     const inlineOptions = [
       [
         [ "\u{1F4DD} Create", "create" ],
+        [ "\u{1F4DD} Create from file", "upload" ],
         [ "\u{1F50D} Find", "find" ],
         [ "\u{1F50D} Cancel", "cancel" ]
       ]
@@ -52,6 +54,8 @@ export default class EcontwittCommand {
     switch (reply) {
       case "create":
         this.create(); break;
+      case "upload":
+        this.upload(); break;
       case "find":
         this.findOption(); break;
       case "cancel":
@@ -70,6 +74,15 @@ export default class EcontwittCommand {
 
   findOption() {
     new econtwittFind({
+      bot: this.bot,
+      dbClient: this.dbClient,
+      chatID: this.chatID,
+      messageID: this.messageID
+    });
+  }
+
+  upload() {
+    new econtwittUpload({
       bot: this.bot,
       dbClient: this.dbClient,
       chatID: this.chatID,
